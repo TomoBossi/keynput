@@ -117,6 +117,72 @@ func NewKeyboard(name string) (*Keyboard, error) {
 	}, nil
 }
 
+func (k *Keyboard) Close() error {
+	return close(k.devNode)
+}
+
+func (k *Keyboard) KeyPress(keycode uint16) error {
+	if keycode < 1 || keycode > keyMax {
+		return fmt.Errorf("code %d out of range [1, %d]", keycode, keyMax)
+	}
+
+	err := keyEvent(k.devNode, keycode, BTN_PRESSED)
+	if err != nil {
+		return err
+	}
+
+	return keyEvent(k.devNode, keycode, BTN_RELEASED)
+}
+
+func keyEvent(devNode *os.File, keycode uint16, value uint32) error {
+	err := writeEvent(
+		inputEvent{
+			time:  timeval{sec: 0, usec: 0},
+			typ:   EV_KEY,
+			code:  keycode,
+			value: value,
+		},
+		devNode,
+	)
+	if err != nil {
+		return err
+	}
+
+	return syncEvent(devNode)
+}
+
+func syncEvent(devNode *os.File) error {
+	return writeEvent(
+		inputEvent{
+			time:  timeval{sec: 0, usec: 0},
+			typ:   EV_SYN,
+			code:  SYN_REPORT,
+			value: 0,
+		},
+		devNode,
+	)
+
+}
+
+func writeEvent(event inputEvent, devNode *os.File) error {
+	bytes, err := inputEventBytes(event)
+	if err != nil {
+		return err
+	}
+
+	_, err = devNode.Write(bytes)
+	return err
+}
+
+func inputEventBytes(event inputEvent) ([]byte, error) {
+	buffer := bytes.NewBuffer(make([]byte, 0, inputEventSize))
+	err := binary.Write(buffer, binary.LittleEndian, event)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
 func awaitDevice(device uinputDevice) error {
 	devNodePath := ""
 	for len(devNodePath) == 0 {
@@ -181,71 +247,6 @@ func awaitDevice(device uinputDevice) error {
 	}
 
 	return nil
-}
-
-func (k *Keyboard) KeyPress(keycode uint16) error {
-	if keycode < 1 || keycode > keyMax {
-		return fmt.Errorf("code %d out of range [1, %d]", keycode, keyMax)
-	}
-
-	err := sendKeyEvent(k.devNode, keycode, BTN_PRESSED)
-	if err != nil {
-		return err
-	}
-
-	err = sendKeyEvent(k.devNode, keycode, BTN_RELEASED)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func sendKeyEvent(devNode *os.File, key uint16, value uint32) error {
-	buffer, err := inputEventToBuffer(
-		inputEvent{
-			time:  timeval{sec: 0, usec: 0},
-			typ:   EV_KEY,
-			code:  key,
-			value: value,
-		},
-	)
-	if err != nil {
-		return err
-	}
-
-	_, err = devNode.Write(buffer)
-	if err != nil {
-		return err
-	}
-
-	return syncEvent(devNode)
-}
-
-func syncEvent(devNode *os.File) error {
-	buffer, err := inputEventToBuffer(inputEvent{
-		time:  timeval{sec: 0, usec: 0},
-		typ:   EV_SYN,
-		code:  SYN_REPORT,
-		value: 0})
-	if err != nil {
-		return err
-	}
-	_, err = devNode.Write(buffer)
-	return err
-}
-
-func inputEventToBuffer(event inputEvent) ([]byte, error) {
-	buffer := bytes.NewBuffer(make([]byte, 0, inputEventSize))
-	err := binary.Write(buffer, binary.LittleEndian, event)
-	if err != nil {
-		return nil, err
-	}
-	return buffer.Bytes(), nil
-}
-
-func (k *Keyboard) Close() error {
-	return close(k.devNode)
 }
 
 func close(devNode *os.File) error {
