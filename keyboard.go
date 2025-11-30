@@ -118,7 +118,12 @@ func NewKeyboard(name string) (*Keyboard, error) {
 }
 
 func (k *Keyboard) Close() error {
-	return close(k.devNode)
+	if k.devNode == nil {
+		return nil
+	}
+	err := close(k.devNode)
+	k.devNode = nil
+	return err
 }
 
 func (k *Keyboard) KeyPress(keycode uint16) error {
