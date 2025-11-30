@@ -126,16 +126,20 @@ func (k *Keyboard) KeyPress(keycode uint16) error {
 		return fmt.Errorf("code %d out of range [1, %d]", keycode, keyMax)
 	}
 
-	err := keyEvent(k.devNode, keycode, BTN_PRESSED)
+	return sendKeyPressEvent(k.devNode, keycode)
+}
+
+func sendKeyPressEvent(devNode *os.File, keycode uint16) error {
+	err := sendKeyEvent(devNode, keycode, BTN_PRESSED)
 	if err != nil {
 		return err
 	}
 
-	return keyEvent(k.devNode, keycode, BTN_RELEASED)
+	return sendKeyEvent(devNode, keycode, BTN_RELEASED)
 }
 
-func keyEvent(devNode *os.File, keycode uint16, value uint32) error {
-	err := writeEvent(
+func sendKeyEvent(devNode *os.File, keycode uint16, value uint32) error {
+	err := sendEvent(
 		inputEvent{
 			time:  timeval{sec: 0, usec: 0},
 			typ:   EV_KEY,
@@ -148,11 +152,11 @@ func keyEvent(devNode *os.File, keycode uint16, value uint32) error {
 		return err
 	}
 
-	return syncEvent(devNode)
+	return sendSyncEvent(devNode)
 }
 
-func syncEvent(devNode *os.File) error {
-	return writeEvent(
+func sendSyncEvent(devNode *os.File) error {
+	return sendEvent(
 		inputEvent{
 			time:  timeval{sec: 0, usec: 0},
 			typ:   EV_SYN,
@@ -164,7 +168,7 @@ func syncEvent(devNode *os.File) error {
 
 }
 
-func writeEvent(event inputEvent, devNode *os.File) error {
+func sendEvent(event inputEvent, devNode *os.File) error {
 	bytes, err := inputEventBytes(event)
 	if err != nil {
 		return err
