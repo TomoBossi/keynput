@@ -9,7 +9,7 @@ Be on Linux. Install the module, import and use it in your program, then compile
 
 ```go
 func main() {
-	keyboard, err := keynput.NewKeyboard("virtual_keyboard")
+	keyboard, err := keynput.Open("virtual_keyboard")
 	if err != nil {
 		panic(err)
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	keyboard, err := keynput.NewKeyboard("keypresses_demo")
+	keyboard, err := keynput.Open("keypresses_demo")
 	if err != nil {
 		panic(err)
 	}

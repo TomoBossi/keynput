@@ -5,9 +5,6 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
-	"regexp"
-	"strconv"
-	"strings"
 	"syscall"
 	"time"
 )
@@ -56,7 +53,7 @@ type Keyboard struct {
 	device  uinputDevice
 }
 
-func NewKeyboard(name string) (*Keyboard, error) {
+func Open(name string) (*Keyboard, error) {
 	if len(name) == 0 || len(name) > uiMaxNameSize {
 		return nil, fmt.Errorf("name must be more than 0 and less than %d characters", uiMaxNameSize)
 	}
@@ -106,10 +103,7 @@ func NewKeyboard(name string) (*Keyboard, error) {
 		return nil, err
 	}
 
-	err = awaitDevice(device)
-	if err != nil {
-		return nil, err
-	}
+	time.Sleep(time.Millisecond * 300)
 
 	return &Keyboard{
 		devNode: devNode,
@@ -190,72 +184,6 @@ func inputEventBytes(event inputEvent) ([]byte, error) {
 		return nil, err
 	}
 	return buffer.Bytes(), nil
-}
-
-func awaitDevice(device uinputDevice) error {
-	devNodePath := ""
-	for len(devNodePath) == 0 {
-		devices, err := os.ReadFile("/proc/bus/input/devices")
-		if err != nil {
-			return err
-		}
-
-		re := regexp.MustCompile(`(?s)Bus=(.*) Vendor=(.*) Product=(.*) Version=(.*)\nN: Name="(.*)"\nP: Phys=\n.*H: Handlers=.*event(\d+)`)
-		for dev := range strings.SplitSeq(string(devices), "\nI: ") {
-
-			matches := re.FindStringSubmatch(dev)
-			if matches == nil {
-				continue
-			}
-
-			bus, err := strconv.ParseInt(matches[1], 16, 64)
-			if err != nil {
-				return err
-			} else if uint16(bus) != device.id.busType {
-				continue
-			}
-
-			vendor, err := strconv.ParseInt(matches[2], 16, 64)
-			if err != nil {
-				return err
-			} else if uint16(vendor) != device.id.vendor {
-				continue
-			}
-
-			product, err := strconv.ParseInt(matches[3], 16, 64)
-			if err != nil {
-				return err
-			} else if uint16(product) != device.id.product {
-				continue
-			}
-
-			version, err := strconv.ParseInt(matches[4], 16, 64)
-			if err != nil {
-				return err
-			} else if uint16(version) != device.id.version {
-				continue
-			}
-
-			var fixedSizeName [uiMaxNameSize]byte
-			copy(fixedSizeName[:], []byte(matches[5]))
-			if fixedSizeName != device.name {
-				continue
-			}
-
-			devNodePath = fmt.Sprintf("/dev/input/event%s", matches[6])
-			break
-		}
-		time.Sleep(time.Millisecond)
-	}
-
-	for {
-		if _, err := os.Stat(devNodePath); err == nil {
-			break
-		}
-		time.Sleep(time.Millisecond)
-	}
-
-	return nil
 }
 
 func close(devNode *os.File) error {
