@@ -164,7 +164,6 @@ func sendSyncEvent(devNode *os.File) error {
 		},
 		devNode,
 	)
-
 }
 
 func sendEvent(event inputEvent, devNode *os.File) error {
