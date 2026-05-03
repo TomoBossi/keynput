@@ -83,7 +83,7 @@ func NewKeyboard(name string) (*Keyboard, error) {
 	device := uinputDevice{
 		name: fixedSizeName,
 		id: inputID{
-			busType: 0x03,
+			busType: BUS_USB,
 			vendor:  0x4711,
 			product: 0x0815,
 			version: 1,

@@ -17,6 +17,12 @@ const (
 	SYN_REPORT           = 0
 	BTN_PRESSED          = 1
 	BTN_RELEASED         = 0
+	BUS_PCI              = 0x01
+	BUS_ISAPNP           = 0x02
+	BUS_USB              = 0x03
+	BUS_HIL              = 0x04
+	BUS_BLUETOOTH        = 0x05
+	BUS_VIRTUAL          = 0x06
 	KEY_RESERVED         = 0
 	KEY_ESC              = 1
 	KEY_1                = 2
