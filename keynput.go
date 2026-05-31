@@ -134,6 +134,7 @@ func sendKeyPressEvent(devNode *os.File, keycode uint16) error {
 		return err
 	}
 
+	time.Sleep(30 * time.Millisecond)
 	return sendKeyEvent(devNode, keycode, BTN_RELEASED)
 }
 
