@@ -120,7 +120,7 @@ func (k *Keyboard) Close() error {
 	return err
 }
 
-func (k *Keyboard) KeyPress(keycode uint16, hold uint) error {
+func (k *Keyboard) KeyPress(keycode uint16, hold time.Duration) error {
 	if keycode < 1 || keycode > keyMax {
 		return fmt.Errorf("code %d out of range [1, %d]", keycode, keyMax)
 	}
@@ -128,13 +128,13 @@ func (k *Keyboard) KeyPress(keycode uint16, hold uint) error {
 	return sendKeyPressEvent(k.devNode, keycode, hold)
 }
 
-func sendKeyPressEvent(devNode *os.File, keycode uint16, hold uint) error {
+func sendKeyPressEvent(devNode *os.File, keycode uint16, hold time.Duration) error {
 	err := sendKeyEvent(devNode, keycode, BTN_PRESSED)
 	if err != nil {
 		return err
 	}
 
-	time.Sleep(time.Duration(hold) * time.Millisecond)
+	time.Sleep(hold)
 	return sendKeyEvent(devNode, keycode, BTN_RELEASED)
 }
 

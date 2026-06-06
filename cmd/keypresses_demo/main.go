@@ -27,7 +27,7 @@ func main() {
 		keynput.KEY_ENTER,
 	} {
 		time.Sleep(time.Millisecond * 100)
-		err := keyboard.KeyPress(keycode, 30)
+		err := keyboard.KeyPress(keycode, time.Millisecond*30)
 		if err != nil {
 			panic(err)
 		}
