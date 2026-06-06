@@ -15,8 +15,8 @@ func main() {
 	}
 	defer keyboard.Close()
 	
-	// send keypress events
-	err := keyboard.KeyPress(keynput.KEY_E)
+	// send E keypress event (held for 30 milliseconds)
+	err := keyboard.KeyPress(keynput.KEY_E, 30)
 	if err != nil {
 		panic(err)
 	}
